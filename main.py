@@ -49,7 +49,7 @@ async def chat(channel_id, str):
 intents = discord.Intents.default()
 intents.message_content = True  # Enable message content intent
 intents.members = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='?', intents=intents)
 
 async def show_leaderboard():
     potw_number = db.get_variable_value("potw_number")
