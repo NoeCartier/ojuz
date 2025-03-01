@@ -4,7 +4,7 @@ db_path = "ojuz.db"
 
 def add_user(user_id, ojuz_pseudo):
     """
-    Adds a user to the 'users' table in the database.
+    Adds a user to the 'users' table in the database. If the user already exists, updates their OJ.UZ pseudo.
 
     Parameters:
         user_id (int): The Discord ID of the user.
@@ -12,25 +12,38 @@ def add_user(user_id, ojuz_pseudo):
         db_path (str): Path to the SQLite database file (default is 'ojuz.db').
 
     Returns:
-        bool: True if the user was added successfully, False if an error occurred (e.g., duplicate Discord ID).
+        bool: True if the user was added or updated successfully, False if an error occurred.
     """
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-
+        # Check if the user already exists
         cursor.execute("""
-            INSERT INTO users (user_id, ojuz_pseudo)
-            VALUES (?, ?);
-        """, (user_id, ojuz_pseudo))
+            SELECT 1
+            FROM users
+            WHERE user_id = ?;
+        """, (user_id,))
+        exists = cursor.fetchone() is not None
+
+        if exists:
+            # Update the user's OJ.UZ pseudo if they already exist
+            cursor.execute("""
+                UPDATE users
+                SET ojuz_pseudo = ?
+                WHERE user_id = ?;
+            """, (ojuz_pseudo, user_id))
+            print(f"User with Discord ID {user_id} updated successfully.")
+        else:
+            # Insert a new user if they do not exist
+            cursor.execute("""
+                INSERT INTO users (user_id, ojuz_pseudo)
+                VALUES (?, ?);
+            """, (user_id, ojuz_pseudo))
+            print(f"User with Discord ID {user_id} added successfully.")
 
         conn.commit()
         conn.close()
-
-        print(f"User with Discord ID {user_id} added successfully.")
         return True
-    except sqlite3.IntegrityError:
-        print(f"Error: A user with Discord ID {user_id} already exists.")
-        return False
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         return False

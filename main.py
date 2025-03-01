@@ -227,7 +227,7 @@ async def post_POTW(ctx):
     if trainer_role in member.roles:
         await postPOTW()
     else:
-        await log("You do not have permission to execute this command.")
+        await ctx.send("You do not have permission to execute this command.")
 
 
 @bot.command(name="update", description="Update the database")
@@ -246,13 +246,13 @@ async def add_problem(ctx, problem_code: str, problem_title: str, problem_priori
     if existing_problem_id:
         db.update_problem_priority(existing_problem_id, problem_priority)
         db.update_problem_proposer(existing_problem_id, ctx.author.id)
-        await log(f"Problem {problem_code} already exists. Updated priority and proposer.")
+        await ctx.send(f"Problem {problem_code} already exists. Updated priority and proposer.")
         return
     problem_proposer = ctx.author.id
     if db.add_problem(problem_code, problem_title, problem_priority, problem_proposer, problem_link):
-        await log(f'Problem {problem_title} has been added to the database.')
+        await ctx.send(f'Problem {problem_title} has been added to the database.')
     else:
-        await log(f'An error occurred while adding the problem. Please try again.')
+        await ctx.send(f'An error occurred while adding the problem. Please try again.')
 
 
 
