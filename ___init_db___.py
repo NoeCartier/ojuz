@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS leaderboard (
 
 # Création de la table "variables"
 cursor.execute("CREATE TABLE IF NOT EXISTS variables (name TEXT, value INTEGER)")
-cursor.execute("REPLACE INTO variables (name, value) VALUES (?, ?)", ("stop_id", 1159500))
+cursor.execute("REPLACE INTO variables (name, value) VALUES (?, ?)", ("stop_id", 1163300))
 cursor.execute("REPLACE INTO variables (name, value) VALUES (?, ?)", ("potw_problem_id", 1))
 cursor.execute("REPLACE INTO variables (name, value) VALUES (?, ?)", ("potw_number", 0))
 

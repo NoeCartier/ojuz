@@ -35,12 +35,14 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 paris_tz = pytz.timezone("Europe/Paris")
 
-async def log(str):
-    if(LOG_CHANNEL == -1):
-        print(str)
+async def log(msg):
+    if LOG_CHANNEL == -1:
+        with open("log.txt", "a") as f:
+            current_time = datetime.datetime.now(paris_tz).strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"[{current_time}] {msg}\n")
         return
     channel = await bot.fetch_channel(LOG_CHANNEL)
-    await channel.send(str)
+    await channel.send(msg)
 
 async def chat(channel_id, str):
     channel = await bot.fetch_channel(channel_id)
@@ -54,7 +56,7 @@ bot = commands.Bot(command_prefix='?', intents=intents)
 async def show_leaderboard():
     potw_number = db.get_variable_value("potw_number")
     leaderboard = db.get_leaderboard()
-    print(leaderboard)
+    await log(str(leaderboard))
     if leaderboard == []:
         await chat(POTW_CHANNEL, "`No submission found for the past POTW :(`")
         return
@@ -65,10 +67,11 @@ async def show_leaderboard():
     for i, entry in enumerate(leaderboard):
         user_id, score = entry
         user = await bot.fetch_user(user_id)
-        embed.add_field(name=f"{i+1}. {user.name}", value=f"Score: {score * 100}%", inline=False)
+        embed.add_field(name=f"{i+1}. {user.display_name}", value=f"Score: {score * 100}%", inline=False)
     
     channel = await bot.fetch_channel(POTW_CHANNEL)
     await channel.send(embed=embed)
+    await channel.send(f"<@&{POTW_ROLE_ID}>")
 
 async def postPOTW():
     NO_PROBLEM = db.get_variable_value("potw_number") == 0
@@ -84,7 +87,6 @@ async def postPOTW():
                     await member.remove_roles(role)
                     await log(f"Removed AC role from {member.display_name}")
     problem = db.get_highest_priority_problem()
-    print(problem)
     await log(str(problem))
     await log("Posting POTW")
     channel = await bot.fetch_channel(POTW_CHANNEL)
@@ -106,7 +108,7 @@ async def postPOTW():
         proposer_user = await bot.fetch_user(problem_proposer)  # Fetch user globally
         avatar_url = proposer_user.avatar.url if proposer_user.avatar else proposer_user.default_avatar.url
         embed.set_footer(
-            text=f"Proposed by : {proposer_user.name}",
+            text=f"Proposed by : {proposer_user.display_name}",
             icon_url=avatar_url
         )
         await log(f"The username for ID {problem_proposer} is {proposer_user.name}")
@@ -124,7 +126,7 @@ async def postPOTW():
         # Open the file and send it as an attachment
         with open(file_path, 'rb') as pdf_file:
             await channel.send(file=discord.File(pdf_file, f'{pdf_id}.pdf'))
-        print(f"Uploaded {pdf_id}.pdf successfully!")
+        await log(f"Uploaded {pdf_id}.pdf successfully!")
     
     except FileNotFoundError:
         await channel.send(f"File `{pdf_id}.pdf` not found")
@@ -257,13 +259,13 @@ async def add_problem(ctx, problem_code: str, problem_title: str, problem_priori
 
 
 
-# Scheduled task to run daily at 7:42 AM
+# Scheduled task to run every monday at 7:42 AM
 @tasks.loop(minutes=1)
 async def schedule_task():
     now = datetime.datetime.now(paris_tz)
     if now.weekday() == 0 and now.hour == 7 and now.minute == 42:
         await log("It's time to post the POTW!")
-        postPOTW()
+        await postPOTW()
 
 
 @tasks.loop(minutes=5)  # Exécuter toutes les 5 minutes
