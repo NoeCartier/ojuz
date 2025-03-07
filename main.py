@@ -223,10 +223,7 @@ async def register(ctx, handle: str):
 # Slash command to manually trigger queue processing
 @bot.command(name="post_POTW", description="post the POTW")
 async def post_POTW(ctx):
-    guild = bot.get_guild(GUILD_ID)
-    member = await guild.fetch_member(ctx.author.id)
-    trainer_role = guild.get_role(TRAINER_ROLE_ID)
-    if trainer_role in member.roles:
+    if ctx.author.id == MY_ID:
         await postPOTW()
     else:
         await ctx.send("You do not have permission to execute this command.")
