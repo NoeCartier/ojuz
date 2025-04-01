@@ -85,6 +85,10 @@ async def show_leaderboard():
     await channel.send(f"<@&{POTW_ROLE_ID}>")
 
 async def postPOTW():
+    is_potwbot_posting = db.get_variable_value("is_potwbot_posting")
+    if is_potwbot_posting == 0:
+        await log("POTW bot is paused. Aborting postPOTW.")
+        return
     NO_PROBLEM = db.get_variable_value("potw_number") == 0
     if not NO_PROBLEM:
         await show_leaderboard()
@@ -281,6 +285,21 @@ async def manual_process_submission(ctx, score: float = 1.0):
     await process_submission(submission_id, submission_time, user_id, problem_id, score)
     await ctx.send(f"Submission processed.")
 
+@bot.command(name='toggle_posting')
+async def toggle_posting(ctx):
+    guild = bot.get_guild(GUILD_ID)
+    member = await guild.fetch_member(ctx.author.id)
+    trainer_role = guild.get_role(TRAINER_ROLE_ID)
+    if trainer_role not in member.roles:
+        await ctx.send("You don't have permission to execute this command.")
+        return
+    current_value = db.get_variable_value("is_potwbot_posting")
+    new_value = (current_value + 1) % 2
+    db.update_variable_value("is_potwbot_posting", new_value)
+    if new_value == 1:
+        await ctx.send("POTW bot posting is now enabled.")
+    else:
+        await ctx.send("POTW bot posting is now disabled.")
 
 # Scheduled task to run every monday at 7:42 AM
 @tasks.loop(minutes=1)
